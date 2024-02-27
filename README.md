@@ -1,6 +1,6 @@
-[![Workflow Status](https://github.com/aokyut/Qit.git/workflows/rust%2Eyml/badge.svg)](https://github.com/aokyut/Qit.git/actions?query=workflow%3A%22rust%2Eyml%22)
+[![Rust](https://github.com/aokyut/Qit/actions/workflows/rust.yml/badge.svg)](https://github.com/aokyut/Qit/actions/workflows/rust.yml)
 
-# Qit
+# Qits
 
 Simple quantum computer simulator library without matrix operations.
 ## Example
