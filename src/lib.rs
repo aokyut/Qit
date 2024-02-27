@@ -2,12 +2,12 @@
 Simple quantum computer simulator library without matrix operations.
 # Example
 ```
-use Qit::core::{gates::{H}, Qubits};
+use Qit::core::{gates::{X, Applicable}, Qubits};
 
 let x_gate = X::new(0);
 
-// make Qbit|000⟩
-let q_in = Qubits::from_num(size: 3, number: 0);
+// make Qbit|000⟩ Qubits::from_num(size: 3, num: 0)
+let q_in = Qubits::from_num(3, 0);
 
 // apply gate to Qbit
 let q_out = x_gate.apply(q_in);

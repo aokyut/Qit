@@ -140,10 +140,11 @@ fn test_full_adder10() {
     for num in 0..1024 {
         let q_in = Qubits::from_num(15, num);
         let q_out = u.apply(q_in);
-        let add = (((num >> 5) & 32) + (num & 7)) & 7;
-        let exp_num = (num & 0b11111_1111100000) | add;
-        let q_expected = Qubits::from_num(15, exp_num);
-        println!("input:{num:b}, expected:{exp_num:b}");
+        let add = (((num >> 5) & 31) + (num & 31)) & 31;
+        let expected_num = (num & 0b11111_1111100000) | add;
+        let q_expected = Qubits::from_num(15, expected_num);
+        let actual = q_out.pop_most_plausible();
+        assert_eq!(actual, expected_num);
         isequal_qubits(&q_out, &q_expected);
     }
 }
@@ -365,7 +366,7 @@ fn test_qft() {
     let q_out = u.apply(q_in);
     let bits = vec![Comp::new(0.25, 0.0); (1 << 4)];
     let expected = Qubits::from_bits(4, bits);
-
+    // q_out.print_cmps();
     isequal_qubits(&q_out, &expected);
 }
 
@@ -381,6 +382,12 @@ fn test_iqft() {
     let q_out = u.apply(q_in);
     let q_out = u2.apply(q_out);
 
+    println!("{}", u.name());
+    println!("{}", u2.name());
+
+    expected.print_cmps();
+    q_out.print_cmps();
+
     isequal_qubits(&expected, &q_out);
 }
 
@@ -388,7 +395,7 @@ fn test_iqft() {
 fn test_phase_estimation() {
     use super::core::gates::H;
     use super::core::gates::{CU, R, U};
-    use super::core::modules::inv_qft;
+    use super::core::modules::{inv_qft, swap};
 
     let x = vec![0, 1, 2, 3];
     fn tar_u() -> U {
@@ -417,6 +424,8 @@ fn test_phase_estimation() {
 
     let q_in = Qubits::from_num(5, 16);
     let q_out = pe.apply(q_in);
+
+    q_out.print_cmps();
 
     assert_eq!(q_out.pop_most_plausible(), (1 << 4) | (1 << 1));
 }

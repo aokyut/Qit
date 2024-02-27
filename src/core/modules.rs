@@ -334,6 +334,15 @@ pub fn qft(x: &[usize]) -> U {
     //! |j⟩ -> exp(i2πkj / 2^n)|k⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
+
+    let (a, b): (Vec<usize>, Vec<usize>) = (
+        (0..(n / 2)).map(|i| x[i]).collect::<Vec<usize>>(),
+        (0..(n / 2)).map(|i| x[n - i - 1]).collect::<Vec<usize>>(),
+    );
+
+    let sw = swap(&a, &b);
+    u_gates.extend(sw.gates);
+
     for i in 0..n {
         // hadamard
         u_gates.push(Box::new(H::new(x[i])));
@@ -341,20 +350,13 @@ pub fn qft(x: &[usize]) -> U {
             let angle = (-((j + 1 - i) as f64)).exp2();
             let r = R::new(x[i], 2.0 * PI * angle);
             u_gates.push(Box::new(CU::new(
-                j,
+                x[j],
                 vec![Box::new(r)],
                 format!("r_+2^-{}", j + 1 - i),
             )));
         }
     }
 
-    let (a, b): (Vec<usize>, Vec<usize>) = (
-        (0..(n / 2)).collect::<Vec<usize>>(),
-        (0..(n / 2)).map(|i| n - i - 1).collect::<Vec<usize>>(),
-    );
-
-    let sw = swap(&a, &b);
-    u_gates.extend(sw.gates);
     return U::new(u_gates, String::from("qft"));
 }
 
@@ -363,10 +365,9 @@ pub fn inv_qft(x: &[usize]) -> U {
     //! Σexp(i2πkj / 2^n)|k⟩ -> |j⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
-
     let (a, b): (Vec<usize>, Vec<usize>) = (
-        (0..(n / 2)).collect::<Vec<usize>>(),
-        (0..(n / 2)).map(|i| n - i - 1).collect::<Vec<usize>>(),
+        (0..(n / 2)).map(|i| x[i]).collect::<Vec<usize>>(),
+        (0..(n / 2)).map(|i| x[n - i - 1]).collect::<Vec<usize>>(),
     );
 
     let sw = swap(&a, &b);
@@ -379,12 +380,14 @@ pub fn inv_qft(x: &[usize]) -> U {
             let angle = 1.0 - (-((j + 1 - i) as f64)).exp2();
             let r = R::new(x[i], 2.0 * PI * angle);
             u_gates.push(Box::new(CU::new(
-                j,
+                x[j],
                 vec![Box::new(r)],
-                format!("cu_-2^-{}", j + 1 - i),
+                format!("r_-2^-{}", j + 1 - i),
             )));
         }
     }
+
+
     let mut u = U::new(u_gates, String::from("iqft"));
     u.reverse();
 
