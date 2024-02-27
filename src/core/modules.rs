@@ -1,9 +1,16 @@
+/*!
+ Commonly used quantum circuits.  
+
+ You can easily use basic operations such as addition and subtraction and 
+ major quantum circuits such as quantum Fourier transform.
+*/
 use std::collections::HashSet;
 
 use super::mod_funcs::{is_coprime, mod_inv, mod_power};
 use super::{gates::*, Qubits};
 
 use std::f64::consts::PI;
+
 
 pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U {
     let cx_a = CX::new(a_in, s_out);
@@ -16,7 +23,7 @@ pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U
 }
 
 pub fn full_adder_bit(a_in: usize, b_in: usize, c_in: usize, c_out: usize) -> U {
-    // |a⟩|b⟩|C⟩|0⟩ -> |a⟩|a+b+c⟩|C⟩|C_out⟩
+    //! |a⟩|b⟩|C⟩|0⟩ -> |a⟩|a+b+c⟩|C⟩|C_out⟩
     let ccx1 = CCX::new(a_in, b_in, c_out);
     let cx1 = CX::new(a_in, b_in);
     let ccx2 = CCX::new(b_in, c_in, c_out);
@@ -207,10 +214,15 @@ pub fn mod_add(
 }
 
 pub fn mod_add_const(b: &[usize], t: usize, a_const: usize, n_const: usize) -> U {
-    //! |b⟩|c⟩|t⟩ -> |a+b mod N⟩|c⟩|t⟩
-    //! c, t = |0⟩
-    //! a, N: const. N < 2^(n+1). a, b < N
-    //! b.len() == n + 1
+    /*!
+     get assembled circuit |b⟩|c⟩|t⟩ → |a+b mod N⟩|c⟩|t⟩
+
+     c, t = |0⟩.  
+     a, N: const.   
+     N < 2^(n+1).    
+     a, b < N.  
+     b.len() == n + 1.  
+     */
     assert!(b.len() > 1);
     check_unique(vec![&b, &vec![t]]);
 
@@ -256,11 +268,12 @@ pub fn cmm_const(
     n_const: usize,
 ) -> U {
     //! controll_mod_mul_const
-    //! |x⟩|0⟩|c⟩|t⟩ -> |x⟩|ax mod N, or x⟩|c⟩|t⟩
-    //! c, t = |0⟩
-    //! a, N: const. N < 2^(n+1). a, x < N
-    //! tar_reg.len() == n + 1
-    //! x.len() == n
+    //!
+    //! |x⟩|0⟩|c⟩|t⟩ -> |x⟩|ax mod N, or x⟩|c⟩|t⟩  
+    //! c, t = |0⟩  
+    //! a, N: const. N < 2^(n+1). a, x < N  
+    //! tar_reg.len() == n + 1  
+    //! x.len() == n  
 
     assert!(tar_reg.len() == x.len());
     assert!(a_const < (1 << x.len()));
@@ -301,8 +314,9 @@ pub fn me_const(
     n_const: usize,
 ) -> U {
     //! mod_exponential_const
-    //! |x⟩|1⟩|0⟩ -> |x⟩|a^x mod N⟩|0⟩
-    //! a_x: n-bit, zero: n-bit, x: m-bit
+    //!
+    //! |x⟩|1⟩|0⟩ -> |x⟩|a^x mod N⟩|0⟩  
+    //! a_x: n-bit, zero: n-bit, x: m-bit  
     assert!(zero.len() == a_x.len());
     assert!(a_x.len() >= 1);
     assert!(is_coprime(a_const, n_const));
@@ -331,6 +345,7 @@ pub fn me_const(
 
 pub fn qft(x: &[usize]) -> U {
     //! quantum_furier_transform
+    //! 
     //! |j⟩ -> exp(i2πkj / 2^n)|k⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
@@ -362,6 +377,7 @@ pub fn qft(x: &[usize]) -> U {
 
 pub fn inv_qft(x: &[usize]) -> U {
     //! inverse_quantum_furier_transform
+    //!
     //! Σexp(i2πkj / 2^n)|k⟩ -> |j⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
@@ -394,7 +410,7 @@ pub fn inv_qft(x: &[usize]) -> U {
     return u;
 }
 
-pub fn check_unique(vecs: Vec<&[usize]>) {
+fn check_unique(vecs: Vec<&[usize]>) {
     let mut set: HashSet<usize> = HashSet::new();
     for v in vecs.iter() {
         for idx in v.iter() {

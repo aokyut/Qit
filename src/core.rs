@@ -1,6 +1,52 @@
+/*!
+Qubit struct used for simulation and complex number struct that composes it
+
+# Example usage
+```
+use Qit::core::{Comp, Qubits}
+let zero = Comp::zero()
+```
+*/
+
 use std::fmt;
 use std::ops;
 
+/**
+ Complex numbers implemented with functions required for quantum simulation
+ It is implemented with the only purpose of expressing quantum bits.
+
+ # Example usage
+ ```
+let zero = Comp::zero();
+println!("{}", zero);
+// +0.000 +0.000i
+let re: f64 = 1.0;
+let im: f64 = -30.0;
+let c = Comp::new(re, im);
+println!("{}", c);
+// +0.200 -30.000i
+let c1 = Comp::new(2.0, 1.0);
+let c2 = Comp::new(1.0, 2.0);
+let add_c1c2 = c1 + c2;
+assert_eq!(add_c1c2, Comp::new(3.0, 3.0));
+
+let sub_c1c2 = c1 - c2;
+assert_eq!(sub_c1c2, Comp::new(1.0, -1.0));
+
+let mul_c1c2 = c1 * c2;
+assert_eq!(mul_c1c2, Comp::new(0.0, 5.0));
+
+let f1: f64 = 2.0;
+let add_c1f1 = c1 + f1;
+assert_eq!(add_c1f1, Comp::new(4.0, 1.0));
+
+let sub_c1f1 = c1 - f1;
+assert_eq!(sub_c1f1, Comp::new(0.0, 1.0));
+
+let mul_c1f1 = c1 * f1;
+assert_eq!(mul_c1f1, Comp::new(4.0, 2.0));
+ ```
+ */
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Comp(pub f64, pub f64);
 
@@ -13,7 +59,7 @@ impl Comp {
         return Comp(re, im);
     }
 
-    pub fn abs(&self) -> f64 {
+    pub fn abs_square(&self) -> f64 {
         return self.0 * self.0 + self.1 * self.1;
     }
 
@@ -97,7 +143,7 @@ impl Qubits {
 
     pub fn from_comp(size: usize, number: usize, comp: Comp) -> Self {
         assert!((1 << size) > number);
-        assert!(comp.abs() == 1.0);
+        assert!(comp.abs_square() == 1.0);
         let mut bits = vec![Comp::zero(); 1 << size];
         bits[number] = comp;
         return Qubits {
@@ -129,7 +175,7 @@ impl Qubits {
                 "|{index:0>size$b}⟩ : {prob:>3}%",
                 index = index,
                 size = self.size,
-                prob = (self.bits[index].abs() * 100.0).round()
+                prob = (self.bits[index].abs_square() * 100.0).round()
             );
         }
     }
@@ -148,7 +194,7 @@ impl Qubits {
     pub fn probs(&self) -> Vec<f64> {
         let mut prob = vec![0.0; (1 << self.size)];
         for index in 0..(1 << self.size) {
-            prob[index] = self.bits[index].abs();
+            prob[index] = self.bits[index].abs_square();
         }
         return prob;
     }
@@ -157,7 +203,7 @@ impl Qubits {
         let mut max_prob = 0.0;
         let mut max_idx = 0;
         for i in 0..(1 << self.size) {
-            let prob = self.bits[i].abs();
+            let prob = self.bits[i].abs_square();
             if max_prob < prob {
                 max_prob = prob;
                 max_idx = i;
@@ -176,7 +222,7 @@ impl Qubits {
             for j in 0..tar.len() {
                 tar_idx |= (1 & (i >> tar[j])) << j;
             }
-            probs[tar_idx] += self.bits[i].abs();
+            probs[tar_idx] += self.bits[i].abs_square();
         }
 
         return probs;
@@ -192,7 +238,7 @@ impl Qubits {
             for j in 0..tar.len() {
                 tar_idx |= (1 & (i >> tar[j])) << j;
             }
-            probs[tar_idx] += self.bits[i].abs();
+            probs[tar_idx] += self.bits[i].abs_square();
         }
 
         for index in 0..(1 << tar.len()) {

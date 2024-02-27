@@ -1,3 +1,7 @@
+/*!
+ Basic gates that make up quantum circuits and traits related to gate applications
+*/
+
 use std::f64::consts::SQRT_2;
 
 use super::{Comp, Qubits};
@@ -5,6 +9,9 @@ use super::{Comp, Qubits};
 const SQRT2_INV: f64 = 1.0 / SQRT_2;
 
 pub trait Applicable {
+    /*!
+     Minimum traits that gates that manipulate qubits must satisfy
+    */
     fn apply(&self, qubits: Qubits) -> Qubits {
         let it = BitSlideIndex::new(1 << qubits.size, 0);
         return self.apply_iter(qubits, &it);
@@ -18,6 +25,8 @@ pub trait Reversible {
 }
 
 pub trait Operator: Applicable + Reversible {}
+
+// pub type OperatorBox = Vec<Box<dyn Operator>>;
 
 pub struct BitSlideIndex {
     idx: usize,

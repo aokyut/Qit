@@ -8,7 +8,7 @@ use super::core::{
 #[test]
 fn test_complex() {
     // abs
-    assert_eq!(Comp::new(2.0, -1.0).abs(), 5.0);
+    assert_eq!(Comp::new(2.0, -1.0).abs_square(), 5.0);
     // add
     assert_eq!(
         Comp::new(2.0, -3.0) + Comp::new(1.2, 5.0),
@@ -343,15 +343,6 @@ fn test_me_const() {
             let q_out3 = u.apply(q_in);
             let actual = q_out3.pop_most_plausible();
             let actual = (actual >> 4) & 0b1111;
-            // println!(
-            //     "{:>04b}^{:>04b} == {:>04b}(actual:{:>04b}) mod {}[{}]",
-            //     a,
-            //     x,
-            //     mod_power(a, x, n),
-            //     actual,
-            //     n,
-            //     mod_power(a, x, n) == actual
-            // );
             assert!(mod_power(a, x, n) == actual);
         }
     }

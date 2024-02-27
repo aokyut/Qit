@@ -13,7 +13,7 @@ keywords = ["engine", "simulation", "quantum"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [badges]
-github = { repository = "aokyut/Qit.git", workflow = "rust.yml" }
+github = { repository = "aokyut/Qit.git", workflow = "Tests" }
 
 [dependencies]
 rand = "0.8.5"
