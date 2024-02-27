@@ -1,4 +1,4 @@
-[![Rust](https://github.com/aokyut/Qit/actions/workflows/rust.yml/badge.svg)](https://github.com/aokyut/Qit/actions/workflows/rust.yml)
+[![Tests](https://github.com/aokyut/Qit/actions/workflows/rust.yml/badge.svg)](https://github.com/aokyut/Qit/actions/workflows/rust.yml)
 
 # Qits
 
