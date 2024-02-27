@@ -1,16 +1,16 @@
-[![Workflow Status](https://github.com/aokyut/Qit.git/workflows/Rust/badge.svg)](https://github.com/aokyut/Qit.git/actions?query=workflow%3A%22Rust%22)
+[![Workflow Status](https://github.com/aokyut/Qit.git/workflows/rust%2Eyml/badge.svg)](https://github.com/aokyut/Qit.git/actions?query=workflow%3A%22rust%2Eyml%22)
 
 # Qit
 
-Quantum computer simulator library without matrix operations.
+Simple quantum computer simulator library without matrix operations.
 ## Example
 ```rust
-use Qit::core::{gates::{H}, Qubits};
+use Qit::core::{gates::{X, Applicable}, Qubits};
 
 let x_gate = X::new(0);
 
-// make Qbit|000⟩
-let q_in = Qubits::from_num(size: 3, number: 0);
+// make Qbit|000⟩ Qubits::from_num(size: 3, num: 0)
+let q_in = Qubits::from_num(3, 0);
 
 // apply gate to Qbit
 let q_out = x_gate.apply(q_in);
@@ -28,7 +28,7 @@ q_out.print_probs();
 
 ```
 
-Current version: 0.1.0
+Current version: 0.1.1
 
 Some additional info here
 
