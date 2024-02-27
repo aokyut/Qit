@@ -1,7 +1,7 @@
 [package]
 name = "Qit"
 license = "MIT"
-author = ["aiotalgo@gmail.com"]
+author = ["epaperamic@gmail.com"]
 version = "0.1.0"
 edition = "2021"
 readme = "README.md"
