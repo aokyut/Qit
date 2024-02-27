@@ -1,10 +1,19 @@
 [package]
 name = "Qit"
-licence = "MIT"
+license = "MIT"
+author = ["aiotalgo@gmail.com"]
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+description = "Quantum computer simulator library without matrix operations."
+repository = "https://github.com/aokyut/Qit.git"
+categories = ["simulation"]
+keywords = ["engine", "simulation", "quantum"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[badges]
+github = { repository = "aokyut/Qit.git", workflow = "Rust" }
 
 [dependencies]
 rand = "0.8.5"
