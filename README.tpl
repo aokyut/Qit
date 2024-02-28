@@ -1,4 +1,4 @@
-{{badges}}
+[![Tests](https://github.com/aokyut/Qit/actions/workflows/rust.yml/badge.svg)](https://github.com/aokyut/Qit/actions/workflows/rust.yml)
 
 # {{crate}}
 
