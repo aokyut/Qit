@@ -6,15 +6,20 @@
 */
 use std::collections::HashSet;
 
-use super::mod_funcs::{is_coprime, mod_inv, mod_power};
-use super::{gates::*, Qubits};
+use super::{
+    core::{
+        mod_funcs::{is_coprime, mod_inv, mod_power},
+        Operator, Reversible,
+    },
+    gates::*,
+};
 
 use std::f64::consts::PI;
 
 /**
 Circuit that performs half addition on qubit
 
-Required number of qubits: 1(a_in) + 1(b_in) + 1(s_out) + 1(c_out) = 4
+Required number of qubits: 1(a_in) + 1(b_in) + 1(s_out) + 1(c_out) = **4**
 */
 pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U {
     let cx_a = CX::new(a_in, s_out);
@@ -125,7 +130,7 @@ Add the input 2 to the power of m to b and store the result in b. Store overflow
 * overflow: Qubit index to set bit in case of overflow
 * m: exponent of power of 2 to add
 
-Required number of qubits: n(b) + 1(overflow) = n + 1
+Required number of qubits: n(b) + 1(overflow) = **n + 1**
 */
 pub fn overflow_qadd_const_2_power(b: &[usize], overflow: usize, m: usize) -> U {
     assert!(b.len() > 0);
@@ -156,7 +161,7 @@ Wrapping add the input 2 to the power of m to b and store the result in b.
 * b: Index of input qubits.
 * m: exponent of power of 2 to add
 
-Required number of qubits: n(b) = n
+Required number of qubits: n(b) = **n**
 */
 pub fn wrapping_qadd_const_2_power(b: &[usize], m: usize) -> U {
     assert!(b.len() > 0);
@@ -213,7 +218,7 @@ Add const_a to b and store the result in b. Store overflow results
 * overflow: Qubit index to set bit in case of overflow
 * a_const: constant number to add
 
-Required number of qubits: n(b) + 1(overflow) = n + 1
+Required number of qubits: n(b) + 1(overflow) = **n + 1**
  */
 pub fn overflow_qadd_const(b: &[usize], overflow: usize, a_const: usize) -> U {
     assert!(b.len() > 0);
@@ -240,7 +245,7 @@ Wrapping add const_a to b and store the result in b.
 * b: Index of input qubits.
 * a_const: constant number to add
 
-Required number of qubits: n(b) = 1
+Required number of qubits: n(b) = **n**
  */
 pub fn wrapping_qadd_const(b: &[usize], a_const: usize) -> U {
     assert!(b.len() > 0);
@@ -274,7 +279,7 @@ Substract const_a to b and store the result in b. Store overflow results
 * overflow: Qubit index to set bit in case of overflow
 * a_const: constant number to sub
 
-Required number of qubits: n(b) + 1(overflow) = n + 1
+Required number of qubits: n(b) + 1(overflow) = **n + 1**
  */
 pub fn overflow_qsub_const(b: &[usize], overflow: usize, a_const: usize) -> U {
     let mut sub = overflow_qadd_const(b, overflow, a_const);
@@ -292,7 +297,7 @@ Wrapping substract const_a to b and store the result in b.
 * b: Index of input qubits.
 * a_const: constant number to sub
 
-Required number of qubits: n(b) = n
+Required number of qubits: n(b) = **n**
  */
 pub fn wrapping_qsub_const(b: &[usize], a_const: usize) -> U {
     let mut sub = wrapping_qadd_const(b, a_const);
@@ -304,7 +309,7 @@ pub fn wrapping_qsub_const(b: &[usize], a_const: usize) -> U {
 /**
 Swap Q-bit between index of a_in and b_in
 
-Required number of qubits: n(a_in) + n(b_in) = 2
+Required number of qubits: n(a_in) + n(b_in) = **2**
  */
 pub fn swap(a_in: &[usize], b_in: &[usize]) -> U {
     assert_eq!(a_in.len(), b_in.len());
@@ -394,7 +399,7 @@ A quantum circuit that adds constants and multiplies modular operations using co
 * a, b < N.
 * b.len() == n.
 
-Required number of qubits: n(b) + 1(overflow) = n + 1
+Required number of qubits: n(b) + 1(overflow) = **n + 1**
 */
 pub fn mod_add_const(b: &[usize], overflow: usize, a_const: usize, n_const: usize) -> U {
     assert!(b.len() > 0);
@@ -437,7 +442,7 @@ A circuit that multiplies input qubits by a constant and stores the result of mo
 * tar_reg.len() == n
 * x.len() == n
 
-Required number of qubits: n(x) + n(tar_reg) + 1(overflow) + 1(cont) = 2n + 2
+Required number of qubits: n(x) + n(tar_reg) + 1(overflow) + 1(cont) = **2n + 2**
 */
 pub fn cmm_const(
     x: &[usize],
@@ -451,8 +456,6 @@ pub fn cmm_const(
     assert!(a_const < (1 << x.len()));
     assert!(n_const < (1 << x.len()));
     check_unique(vec![x, tar_reg, &vec![cont, overflow]]);
-
-    // let tar_reg = &[tar_reg, &vec![overflow]].concat();
 
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
@@ -481,9 +484,11 @@ A circuit that outputs the result of modular operation with n_const after raisin
 
 |x⟩|1⟩|0⟩ → |x⟩|a^x mod N⟩|0⟩
 
-a_x: n-bit, zero: n-bit, x: m-bit
+* a_x: n-bit
+* zero: n-bit
+* x: m-bit
 
-Required number of qubits: n(a_x) + n(zero) + m(x) + 1(overflow) = 2n + m + 1.
+Required number of qubits: n(a_x) + n(zero) + m(x) + 1(overflow) = **2n + m + 1**.
  */
 pub fn me_const(
     x: &[usize],

@@ -4,89 +4,9 @@
 
 use std::f64::consts::SQRT_2;
 
-use super::{Comp, Qubits};
+use super::core::{Applicable, BitSlideIndex, Comp, Operator, Qubits, Reversible};
 
 const SQRT2_INV: f64 = 1.0 / SQRT_2;
-
-pub trait Applicable {
-    /*!
-     Minimum traits that gates that manipulate qubits must satisfy
-    */
-    fn apply(&self, qubits: Qubits) -> Qubits {
-        let it = BitSlideIndex::new(1 << qubits.size, 0);
-        return self.apply_iter(qubits, &it);
-    }
-    fn name(&self) -> String;
-    fn apply_iter(&self, qubits: Qubits, iter: &BitSlideIndex) -> Qubits;
-}
-
-/**
-Trait that implements applying gates in reverse order
- */
-pub trait Reversible {
-    fn reverse(&mut self) {}
-}
-
-/**
-A trait that combines the Applicable and Reversible traits.
- */
-pub trait Operator: Applicable + Reversible {}
-
-/**
-struct used internally when applying gates
- */
-pub struct BitSlideIndex {
-    idx: usize,
-    pub mask: usize,
-    to: usize,
-}
-
-impl BitSlideIndex {
-    pub fn new(to: usize, mask: usize) -> Self {
-        return BitSlideIndex {
-            idx: 0,
-            mask: mask,
-            to: to,
-        };
-    }
-
-    pub fn merge(&self, other: usize) -> Self {
-        if self.mask & other > 0 {
-            println!("self.mask:{:b}, other_mask:{:b}", self.mask, other);
-            panic!("invalid mask was input.");
-        }
-        return BitSlideIndex {
-            idx: 0,
-            mask: self.mask | other,
-            to: self.to,
-        };
-    }
-
-    pub fn init(&mut self) {
-        self.idx = 0;
-    }
-}
-
-impl Iterator for BitSlideIndex {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let idx = self.idx;
-        if (idx & self.mask) != self.mask {
-            let idx = idx | self.mask;
-            self.idx = idx + 1;
-            if idx < self.to {
-                return Some(idx);
-            }
-        } else {
-            self.idx = idx + 1;
-            if idx < self.to {
-                return Some(idx);
-            }
-        }
-        return None;
-    }
-}
 
 /**
  * Hadamard Gate. 1√2(|0⟩⟨0| + |1⟩⟨0| + |0⟩⟨1| - |1⟩⟨1|)
@@ -487,6 +407,10 @@ Unitary struct. struct for applying a vector of arbitrary gates together to a qu
 ```
 use Qit::{gates::*};
 // full adder
+let a_in = 0;
+let b_in = 1;
+let c_in = 2;
+let c_out = 3;
 let ccx1 = CCX::new(a_in, b_in, c_out);
 let cx1 = CX::new(a_in, b_in);
 let ccx2 = CCX::new(b_in, c_in, c_out);

@@ -6,8 +6,21 @@ In this library, qubits are represented by vectors of complex numbers, and gates
 
 # Example usage
 ```
-use Qit::core::{Comp, Qubits}
-let zero = Comp::zero()
+use Qit::{circuits::wrapping_qadd_const, core::{Qubits, Applicable}};
+let q_in = Qubits::from_num(3, 4);
+// q_in = |0100⟩
+let add = wrapping_qadd_const(&vec![0, 1, 2], 3);
+// add * |b⟩ = |b + 3⟩
+let q_out = add.apply(q_in);
+q_out.print_cmps();
+// |000⟩ : +0.000 +0.000i
+// |001⟩ : +0.000 +0.000i
+// |010⟩ : +0.000 +0.000i
+// |011⟩ : +0.000 +0.000i
+// |100⟩ : +0.000 +0.000i
+// |101⟩ : +0.000 +0.000i
+// |110⟩ : +0.000 +0.000i
+// |111⟩ : +1.000 +0.000i
 ```
 */
 
@@ -20,6 +33,7 @@ use std::ops;
 
  # Example usage
  ```
+use Qit::core::Comp;
 let zero = Comp::zero();
 println!("{}", zero);
 // +0.000 +0.000i
@@ -53,8 +67,8 @@ assert_eq!(mul_c1f1, Comp::new(4.0, 2.0));
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Comp(pub f64, pub f64);
 
-pub mod circuits;
-pub mod gates;
+// pub mod circuits;
+// pub mod gates;
 pub mod mod_funcs;
 
 impl Comp {
@@ -303,6 +317,86 @@ impl Qubits {
         }
     }
 }
+
+/**
+ Minimum traits that gates that manipulate qubits must satisfy
+*/
+pub trait Applicable {
+    fn apply(&self, qubits: Qubits) -> Qubits {
+        let it = BitSlideIndex::new(1 << qubits.size, 0);
+        return self.apply_iter(qubits, &it);
+    }
+    fn name(&self) -> String;
+    fn apply_iter(&self, qubits: Qubits, iter: &BitSlideIndex) -> Qubits;
+}
+
+/**
+struct used internally when applying gates
+ */
+pub struct BitSlideIndex {
+    idx: usize,
+    pub mask: usize,
+    to: usize,
+}
+
+impl BitSlideIndex {
+    pub fn new(to: usize, mask: usize) -> Self {
+        return BitSlideIndex {
+            idx: 0,
+            mask: mask,
+            to: to,
+        };
+    }
+
+    pub fn merge(&self, other: usize) -> Self {
+        if self.mask & other > 0 {
+            println!("self.mask:{:b}, other_mask:{:b}", self.mask, other);
+            panic!("invalid mask was input.");
+        }
+        return BitSlideIndex {
+            idx: 0,
+            mask: self.mask | other,
+            to: self.to,
+        };
+    }
+
+    pub fn init(&mut self) {
+        self.idx = 0;
+    }
+}
+
+impl Iterator for BitSlideIndex {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let idx = self.idx;
+        if (idx & self.mask) != self.mask {
+            let idx = idx | self.mask;
+            self.idx = idx + 1;
+            if idx < self.to {
+                return Some(idx);
+            }
+        } else {
+            self.idx = idx + 1;
+            if idx < self.to {
+                return Some(idx);
+            }
+        }
+        return None;
+    }
+}
+
+/**
+Trait that implements applying gates in reverse order
+ */
+pub trait Reversible {
+    fn reverse(&mut self) {}
+}
+
+/**
+A trait that combines the Applicable and Reversible traits.
+ */
+pub trait Operator: Applicable + Reversible {}
 
 /**
 Obtain the observed bit string from the probability distribution extracted from the measure function
