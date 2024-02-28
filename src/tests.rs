@@ -213,9 +213,14 @@ fn test_moduler_adder() {
 #[test]
 fn test_add_const() {
     use super::core::circuits::add_const;
+    use super::core::circuits::{overflow_qadd_const, wrapping_qadd_const};
     // let u = add_const(vec![0, 1, 2, 3])
     for a in 0..8 {
         let u = add_const(&vec![0, 1, 2, 3], a);
+        let u1 = wrapping_qadd_const(&vec![0, 1, 2, 3], a);
+        let u2 = overflow_qadd_const(&vec![0, 1, 2], 3, a);
+        println!("u1:{}", u1.name());
+        println!("u2:{}", u2.name());
         for b in 0..8 {
             let q_in = Qubits::from_num(4, b);
             let b_out = a + b;
@@ -223,6 +228,13 @@ fn test_add_const() {
             println!("{:b} + {:b} = {:b}", a, b, b_out);
             let q_out = u.apply(q_in);
             assert_eq!(q_out.pop_most_plausible(), b_out);
+
+            let q_in = Qubits::from_num(4, b);
+            let q_out2 = u1.apply(q_in);
+            let q_in = Qubits::from_num(4, b);
+            let q_out3 = u2.apply(q_in);
+            isequal_qubits(&q_out, &q_out2);
+            isequal_qubits(&q_out, &q_out3);
         }
     }
 }
@@ -256,7 +268,7 @@ fn test_mod_add_const() {
     // let u = add_const(vec![0, 1, 2, 3])
     let n = 7;
     for a in 0..8 {
-        let u = mod_add_const(&vec![0, 1, 2, 3], 4, a, n);
+        let u = mod_add_const(&vec![0, 1, 2], 3, a, n);
         for b in 0..6 {
             let q_in = Qubits::from_num(5, b);
             // let b_out = (a + b);
@@ -301,9 +313,9 @@ fn test_cmm_const() {
     use super::core::circuits::cmm_const;
     let n = 15;
     for a in 0..n {
-        let u = cmm_const(&vec![0, 1, 2, 3], &vec![4, 5, 6, 7], 8, 9, 10, a, n);
+        let u = cmm_const(&vec![0, 1, 2, 3], &vec![4, 5, 6, 7], 8, 9, a, n);
         for b in 0..n {
-            let q_in = Qubits::from_num(11, b | 1 << 10);
+            let q_in = Qubits::from_num(10, b | 1 << 9);
             let q_out = u.apply(q_in);
             let actual = q_out.pop_most_plausible();
             // println!(
@@ -334,12 +346,11 @@ fn test_me_const() {
             &vec![4, 5, 6, 7],
             &vec![8, 9, 10, 11],
             12,
-            13,
             a,
             n,
         );
         for x in 1..8 {
-            let q_in = Qubits::from_num(14, x);
+            let q_in = Qubits::from_num(13, x);
             let q_out3 = u.apply(q_in);
             let actual = q_out3.pop_most_plausible();
             let actual = (actual >> 4) & 0b1111;

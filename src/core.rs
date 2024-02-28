@@ -1,5 +1,8 @@
 /*!
-Qubit struct used for simulation and complex number struct that composes it
+Qubit struct used for simulation and complex number struct that composes it.
+
+In this library, qubits are represented by vectors of complex numbers, and gates are defined as structs that change vectors of complex numbers.
+"gates" has basic 1-bit operators such as H, Z, Y, and Z, 2-bit operators such as CX, and a struct that uses them all as one operator.
 
 # Example usage
 ```

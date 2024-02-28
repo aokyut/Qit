@@ -507,6 +507,10 @@ impl U {
             label: name,
         };
     }
+
+    pub fn rename(&mut self, name: String) {
+        self.label = name;
+    }
 }
 
 impl Applicable for U {

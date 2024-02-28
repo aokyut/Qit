@@ -11,6 +11,11 @@ use super::{gates::*, Qubits};
 
 use std::f64::consts::PI;
 
+/**
+Circuit that performs half addition on qubit
+
+Required number of qubits: 1(a_in) + 1(b_in) + 1(s_out) + 1(c_out) = 4
+*/
 pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U {
     let cx_a = CX::new(a_in, s_out);
     let cx_b = CX::new(b_in, s_out);
@@ -111,8 +116,75 @@ pub fn add_const_2_power(b: &[usize], m: usize) -> U {
     return U::new(u_gates, String::from("add_const_2^n"));
 }
 
+/**
+Add the input 2 to the power of m to b and store the result in b. Store overflow results
+
+|0⟩|b⟩ → |overflow⟩|b + 2^m⟩
+
+* b: Index of input qubits.
+* overflow: Qubit index to set bit in case of overflow
+* m: exponent of power of 2 to add
+
+Required number of qubits: n(b) + 1(overflow) = n + 1
+*/
+pub fn overflow_qadd_const_2_power(b: &[usize], overflow: usize, m: usize) -> U {
+    assert!(b.len() > 0);
+    assert!(b.len() > m);
+    check_unique(vec![&b, &vec![overflow]]);
+    let b = &[b, &vec![overflow]].concat();
+    let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
+    for i in (m + 1)..b.len() {
+        let i = b.len() - i + m;
+        let controlls: Vec<usize> = (m..i).map(|x| b[x]).collect();
+        if controlls.len() == 1 {
+            u_gates.push(Box::new(CX::new(controlls[0], b[i])));
+        } else if controlls.len() == 2 {
+            u_gates.push(Box::new(CCX::new(controlls[0], controlls[1], b[i])));
+        } else {
+            u_gates.push(Box::new(CNX::new(controlls, b[i])));
+        }
+    }
+    u_gates.push(Box::new(X::new(b[m])));
+    return U::new(u_gates, String::from("o_qadd_const_2^n"));
+}
+
+// wrapping_qadd_const_2_power
+/**
+Wrapping add the input 2 to the power of m to b and store the result in b.
+|b⟩ → |b + 2^m⟩
+
+* b: Index of input qubits.
+* m: exponent of power of 2 to add
+
+Required number of qubits: n(b) = n
+*/
+pub fn wrapping_qadd_const_2_power(b: &[usize], m: usize) -> U {
+    assert!(b.len() > 0);
+    assert!(b.len() > m);
+    check_unique(vec![&b]);
+    let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
+    for i in (m + 1)..b.len() {
+        let i = b.len() - i + m;
+        let controlls: Vec<usize> = (m..i).map(|x| b[x]).collect();
+        if controlls.len() == 1 {
+            u_gates.push(Box::new(CX::new(controlls[0], b[i])));
+        } else if controlls.len() == 2 {
+            u_gates.push(Box::new(CCX::new(controlls[0], controlls[1], b[i])));
+        } else {
+            u_gates.push(Box::new(CNX::new(controlls, b[i])));
+        }
+    }
+    u_gates.push(Box::new(X::new(b[m])));
+    return U::new(u_gates, String::from("w_qadd_const_2^n"));
+}
+
+/**
+A quantum circuit that directly overwrites the input qubit with the result of adding the value represented by the qubit and a constant.
+
+|0⟩|b⟩ → |overflow⟩|b + a⟩
+
+*/
 pub fn add_const(b: &[usize], a_const: usize) -> U {
-    //! |0⟩|b⟩ → |overflow⟩|b + a⟩
     assert!(b.len() > 1);
     assert!((a_const >> (b.len() - 1)) == 0);
     check_unique(vec![b]);
@@ -131,6 +203,61 @@ pub fn add_const(b: &[usize], a_const: usize) -> U {
     return U::new(u_gates, String::from("add_const"));
 }
 
+// overflow_qadd_const
+/**
+Add const_a to b and store the result in b. Store overflow results
+
+|0⟩|b⟩ → |overflow⟩|b + a_const⟩
+
+* b: Index of input qubits.
+* overflow: Qubit index to set bit in case of overflow
+* a_const: constant number to add
+
+Required number of qubits: n(b) + 1(overflow) = n + 1
+ */
+pub fn overflow_qadd_const(b: &[usize], overflow: usize, a_const: usize) -> U {
+    assert!(b.len() > 0);
+    assert!((a_const >> (b.len())) == 0);
+
+    check_unique(vec![&b, &vec![overflow]]);
+
+    let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
+    for i in 0..(b.len()) {
+        if (a_const >> i) & 1 == 1 {
+            u_gates.extend(overflow_qadd_const_2_power(b, overflow, i).gates);
+        }
+    }
+
+    return U::new(u_gates, String::from("o_qadd_const"));
+}
+
+// wrapping_qadd_const
+/**
+Wrapping add const_a to b and store the result in b.
+
+|b⟩ → |b + a_const⟩
+
+* b: Index of input qubits.
+* a_const: constant number to add
+
+Required number of qubits: n(b) = 1
+ */
+pub fn wrapping_qadd_const(b: &[usize], a_const: usize) -> U {
+    assert!(b.len() > 0);
+    assert!((a_const >> (b.len())) == 0);
+
+    check_unique(vec![&b]);
+
+    let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
+    for i in 0..(b.len()) {
+        if (a_const >> i) & 1 == 1 {
+            u_gates.extend(wrapping_qadd_const_2_power(b, i).gates);
+        }
+    }
+
+    return U::new(u_gates, String::from("w_qadd_const"));
+}
+
 pub fn sub_const(b: &[usize], a_const: usize) -> U {
     //! |0⟩|b⟩|0⟩ → |sign⟩|b + a⟩|0⟩
     let mut sub = add_const(b, a_const);
@@ -138,8 +265,48 @@ pub fn sub_const(b: &[usize], a_const: usize) -> U {
     return U::new(sub.gates, String::from("sub_const"));
 }
 
+/**
+Substract const_a to b and store the result in b. Store overflow results
+
+|0⟩|b⟩ → |overflow⟩|b - a_const⟩
+
+* b: Index of input qubits.
+* overflow: Qubit index to set bit in case of overflow
+* a_const: constant number to sub
+
+Required number of qubits: n(b) + 1(overflow) = n + 1
+ */
+pub fn overflow_qsub_const(b: &[usize], overflow: usize, a_const: usize) -> U {
+    let mut sub = overflow_qadd_const(b, overflow, a_const);
+    sub.reverse();
+    sub.rename(String::from("o_qsub_const"));
+    return sub;
+}
+
+/**
+
+Wrapping substract const_a to b and store the result in b.
+
+|b⟩ → |b - a_const⟩
+
+* b: Index of input qubits.
+* a_const: constant number to sub
+
+Required number of qubits: n(b) = n
+ */
+pub fn wrapping_qsub_const(b: &[usize], a_const: usize) -> U {
+    let mut sub = wrapping_qadd_const(b, a_const);
+    sub.reverse();
+    sub.rename(String::from("w_qsub_const"));
+    return sub;
+}
+
+/**
+Swap Q-bit between index of a_in and b_in
+
+Required number of qubits: n(a_in) + n(b_in) = 2
+ */
 pub fn swap(a_in: &[usize], b_in: &[usize]) -> U {
-    // assert
     assert_eq!(a_in.len(), b_in.len());
     check_unique(vec![&a_in, &b_in]);
 
@@ -155,6 +322,11 @@ pub fn swap(a_in: &[usize], b_in: &[usize]) -> U {
     return U::new(u_gates, String::from("swap"));
 }
 
+/**
+A quantum circuit that stores the result of addition and modular operation in one input bit.
+
+|a⟩|b⟩|N⟩|0⟩ → |a⟩|a+b mod N⟩|N⟩|0⟩
+*/
 pub fn mod_add(
     a: &[usize],
     b: &[usize],
@@ -163,7 +335,6 @@ pub fn mod_add(
     t: usize,
     num: usize,
 ) -> U {
-    //! |a⟩|b⟩|N⟩|0⟩ → |a⟩|a+b mod N⟩|N⟩|0⟩
     assert_eq!(a.len(), b.len());
     assert_eq!(n_in.len(), b.len());
     assert_eq!(zero.len(), b.len());
@@ -212,81 +383,83 @@ pub fn mod_add(
     return U::new(u_gates, String::from("moduler_adder"));
 }
 
-pub fn mod_add_const(b: &[usize], t: usize, a_const: usize, n_const: usize) -> U {
-    /*!
-    get assembled circuit |b⟩|c⟩|t⟩ → |a+b mod N⟩|c⟩|t⟩
+/**
+A quantum circuit that adds constants and multiplies modular operations using constants, and stores the result in one input bit.
 
-    c, t = |0⟩.
-    a, N: const.
-    N < 2^(n+1).
-    a, b < N.
-    b.len() == n + 1.
-    */
-    assert!(b.len() > 1);
-    check_unique(vec![&b, &vec![t]]);
+|b⟩|overflow:0⟩ → |a+b mod N⟩|0⟩
 
+* overflow = |0⟩.
+* a, N: const.
+* N < 2^(n+1).
+* a, b < N.
+* b.len() == n.
+
+Required number of qubits: n(b) + 1(overflow) = n + 1
+*/
+pub fn mod_add_const(b: &[usize], overflow: usize, a_const: usize, n_const: usize) -> U {
+    assert!(b.len() > 0);
+    check_unique(vec![&b, &vec![overflow]]);
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
     // (1)[add_a] |b⟩ -> |a+b⟩
-    u_gates.extend(add_const(b, a_const).gates);
+    u_gates.extend(overflow_qadd_const(b, overflow, a_const).gates);
 
     // (2)[sub_n] |a+b⟩ -> |a+b-N⟩
-    u_gates.extend(sub_const(b, n_const).gates);
+    u_gates.extend(overflow_qsub_const(b, overflow, n_const).gates);
 
-    // (3)[flag] |0⟩ -> |0⟩ (a+b >= N)
-    //               -> |1⟩ (a+b <  N)
-    let sign = b[b.len() - 1];
-    u_gates.push(Box::new(CX::new(sign, t)));
+    // [ovrflow] |0⟩ -> |0⟩ (a+b >= N), (0<= a+b - N < N)
+    //               -> |1⟩ (a+b <  N), (a+b - N < 0, overflowed)
 
     // (4)[cont_add_N] |a+b-N⟩ -> |a+b-N⟩ (a+b >= N)
     //                         -> |a+b⟩   (a+b <  N)
-    let add_n = add_const(b, n_const);
-    let const_add_n = CU::new(t, add_n.gates, String::from("cu-add_N"));
+    let add_n = wrapping_qadd_const(b, n_const);
+    let const_add_n = CU::new(overflow, add_n.gates, String::from("cu-add_N"));
     u_gates.push(Box::new(const_add_n));
 
     // (5)[sub_a] |a+b-N or a+b⟩ -> |b-N or b⟩
-    u_gates.extend(sub_const(b, a_const).gates);
+    u_gates.extend(overflow_qsub_const(b, overflow, a_const).gates);
 
     // (6)[unflag] |0 or 1⟩ -> |0⟩
-    u_gates.push(Box::new(CX::new(sign, t)));
-    u_gates.push(Box::new(X::new(t)));
+    u_gates.push(Box::new(X::new(overflow)));
 
     // (7)[add_a] |b-N or b⟩ -> |a+b-N or a+b⟩
-    u_gates.extend(add_const(b, a_const).gates);
+    u_gates.extend(wrapping_qadd_const(b, a_const).gates);
 
     return U::new(u_gates, String::from("mod_add_const"));
 }
 
+/**
+A circuit that multiplies input qubits by a constant and stores the result of modular operation using the constant in the input qubit.
+
+* |x⟩|0⟩|overflow: 0⟩|cont⟩ → |x⟩|ax mod N, or x⟩|0⟩|cont⟩
+* overflow = |0⟩
+* a, N: const. N < 2^(n+1). a, x < N
+* tar_reg.len() == n
+* x.len() == n
+
+Required number of qubits: n(x) + n(tar_reg) + 1(overflow) + 1(cont) = 2n + 2
+*/
 pub fn cmm_const(
     x: &[usize],
     tar_reg: &[usize],
     overflow: usize,
-    t_add: usize,
     cont: usize,
     a_const: usize,
     n_const: usize,
 ) -> U {
-    //! controll_mod_mul_const
-    //!
-    //! |x⟩|0⟩|c⟩|t⟩ → |x⟩|ax mod N, or x⟩|c⟩|t⟩  
-    //! c, t = |0⟩  
-    //! a, N: const. N < 2^(n+1). a, x < N  
-    //! tar_reg.len() == n + 1  
-    //! x.len() == n  
-
     assert!(tar_reg.len() == x.len());
     assert!(a_const < (1 << x.len()));
     assert!(n_const < (1 << x.len()));
-    check_unique(vec![x, tar_reg, &vec![t_add, cont, overflow]]);
+    check_unique(vec![x, tar_reg, &vec![cont, overflow]]);
 
-    let tar_reg = &[tar_reg, &vec![overflow]].concat();
+    // let tar_reg = &[tar_reg, &vec![overflow]].concat();
 
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
     let mut mul: Vec<Box<dyn Operator>> = Vec::new();
 
     for i in 0..x.len() {
-        let adder = mod_add_const(tar_reg, t_add, (a_const << i) % n_const, n_const);
+        let adder = mod_add_const(tar_reg, overflow, (a_const << i) % n_const, n_const);
         mul.push(Box::new(CU::from_u(x[i], adder)));
     }
 
@@ -303,23 +476,27 @@ pub fn cmm_const(
     return U::new(u_gates, String::from("cmm_const"));
 }
 
+/**
+A circuit that outputs the result of modular operation with n_const after raising a_const to the power of the input qubit.
+
+|x⟩|1⟩|0⟩ → |x⟩|a^x mod N⟩|0⟩
+
+a_x: n-bit, zero: n-bit, x: m-bit
+
+Required number of qubits: n(a_x) + n(zero) + m(x) + 1(overflow) = 2n + m + 1.
+ */
 pub fn me_const(
     x: &[usize],
     a_x: &[usize],
     zero: &[usize],
     overflow: usize,
-    t_add: usize,
     a_const: usize,
     n_const: usize,
 ) -> U {
-    //! mod_exponential_const
-    //!
-    //! |x⟩|1⟩|0⟩ → |x⟩|a^x mod N⟩|0⟩  
-    //! a_x: n-bit, zero: n-bit, x: m-bit  
     assert!(zero.len() == a_x.len());
     assert!(a_x.len() >= 1);
     assert!(is_coprime(a_const, n_const));
-    check_unique(vec![&x, &a_x, &vec![overflow, t_add]]);
+    check_unique(vec![&x, &a_x, &vec![overflow]]);
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
     // a^x |0⟩ -> |1⟩
@@ -330,11 +507,11 @@ pub fn me_const(
         let const_a_xi = mod_power(a_const, 1 << i, n_const);
         let _const_a_xi = mod_inv(const_a_xi, n_const);
         //[cmm] |x⟩|0⟩ -> |x⟩|0 + x * a^2^x_n mod N⟩
-        u_gates.extend(cmm_const(a_x, zero, overflow, t_add, x_i, const_a_xi, n_const).gates);
+        u_gates.extend(cmm_const(a_x, zero, overflow, x_i, const_a_xi, n_const).gates);
         u_gates.extend(swap(a_x, zero).gates);
         //[icmm] |x⟩|x * a^2^x_n mod N⟩ -> |x - x * a^2^x_n * a^(-2^x_n)⟩|x * a^2^x_n mod N⟩
         //                              -> |0⟩|x * a^2^x_n mod N⟩
-        let mut icmm = cmm_const(a_x, zero, overflow, t_add, x_i, _const_a_xi, n_const);
+        let mut icmm = cmm_const(a_x, zero, overflow, x_i, _const_a_xi, n_const);
         icmm.reverse();
         u_gates.extend(icmm.gates);
     }
@@ -342,10 +519,12 @@ pub fn me_const(
     return U::new(u_gates, String::from("me_const"));
 }
 
+/**
+Circuit that performs quantum Fourier transform
+
+|j⟩ → exp(i2πkj / 2^n)|k⟩
+*/
 pub fn qft(x: &[usize]) -> U {
-    //! quantum_furier_transform
-    //!
-    //! |j⟩ → exp(i2πkj / 2^n)|k⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
@@ -374,10 +553,12 @@ pub fn qft(x: &[usize]) -> U {
     return U::new(u_gates, String::from("qft"));
 }
 
+/**
+Circuit that performs inverse quantum Fourier transform
+
+Σexp(i2πkj / 2^n)|k⟩ → |j⟩
+*/
 pub fn inv_qft(x: &[usize]) -> U {
-    //! inverse_quantum_furier_transform
-    //!
-    //! Σexp(i2πkj / 2^n)|k⟩ → |j⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
     let (a, b): (Vec<usize>, Vec<usize>) = (
