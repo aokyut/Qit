@@ -102,7 +102,7 @@ fn test_ccx() {
 
 #[test]
 fn test_half_adder() {
-    use super::core::modules::half_adder_bit;
+    use super::core::circuits::half_adder_bit;
     let u = half_adder_bit(0, 1, 2, 3);
     for num in 0..4 {
         let q_in = Qubits::from_num(4, num);
@@ -116,7 +116,7 @@ fn test_half_adder() {
 
 #[test]
 fn test_full_adder() {
-    use super::core::modules::full_adder_nbits;
+    use super::core::circuits::full_adder_nbits;
     let u = full_adder_nbits(&vec![3, 4, 5], &vec![0, 1, 2], &vec![6, 7, 8]);
     for num in 0..64 {
         let q_in = Qubits::from_num(9, num);
@@ -131,7 +131,7 @@ fn test_full_adder() {
 
 #[test]
 fn test_full_adder10() {
-    use super::core::modules::full_adder_nbits;
+    use super::core::circuits::full_adder_nbits;
     let u = full_adder_nbits(
         &vec![5, 6, 7, 8, 9],
         &vec![0, 1, 2, 3, 4],
@@ -151,7 +151,7 @@ fn test_full_adder10() {
 
 #[test]
 fn test_full_sub() {
-    use super::core::modules::substract_nbits;
+    use super::core::circuits::substract_nbits;
     let u = substract_nbits(&vec![3, 4, 5], &vec![0, 1, 2], &vec![6, 7, 8]);
     println!("{}", u.name());
     for num in 0..64 {
@@ -169,7 +169,7 @@ fn test_full_sub() {
 
 #[test]
 fn test_swap() {
-    use super::core::modules::swap;
+    use super::core::circuits::swap;
     let u = swap(&vec![0, 1, 2], &vec![3, 4, 5]);
     println!("{}", u.name());
     for num in 0..64 {
@@ -186,7 +186,7 @@ fn test_swap() {
 
 #[test]
 fn test_moduler_adder() {
-    use super::core::modules::mod_add;
+    use super::core::circuits::mod_add;
     let u = mod_add(
         &vec![0, 1, 2, 3],
         &vec![4, 5, 6, 7],
@@ -212,7 +212,7 @@ fn test_moduler_adder() {
 
 #[test]
 fn test_add_const() {
-    use super::core::modules::add_const;
+    use super::core::circuits::add_const;
     // let u = add_const(vec![0, 1, 2, 3])
     for a in 0..8 {
         let u = add_const(&vec![0, 1, 2, 3], a);
@@ -229,7 +229,7 @@ fn test_add_const() {
 
 #[test]
 fn test_sub_const() {
-    use super::core::modules::sub_const;
+    use super::core::circuits::sub_const;
     // let u = add_const(vec![0, 1, 2, 3])
     for a in 0..8 {
         let u = sub_const(&vec![0, 1, 2, 3], a);
@@ -252,7 +252,7 @@ fn test_sub_const() {
 
 #[test]
 fn test_mod_add_const() {
-    use super::core::modules::mod_add_const;
+    use super::core::circuits::mod_add_const;
     // let u = add_const(vec![0, 1, 2, 3])
     let n = 7;
     for a in 0..8 {
@@ -280,7 +280,7 @@ fn test_mod_add_const() {
 
 #[test]
 fn test_add_const_2_power() {
-    use super::core::modules::add_const_2_power;
+    use super::core::circuits::add_const_2_power;
 
     for a in 0..4 {
         let u = add_const_2_power(&vec![0, 1, 2, 3, 4], a);
@@ -298,7 +298,7 @@ fn test_add_const_2_power() {
 
 #[test]
 fn test_cmm_const() {
-    use super::core::modules::cmm_const;
+    use super::core::circuits::cmm_const;
     let n = 15;
     for a in 0..n {
         let u = cmm_const(&vec![0, 1, 2, 3], &vec![4, 5, 6, 7], 8, 9, 10, a, n);
@@ -321,9 +321,9 @@ fn test_cmm_const() {
 
 #[test]
 fn test_me_const() {
+    use super::core::circuits::{cmm_const, me_const, swap};
     use super::core::gates::X;
     use super::core::mod_funcs::{is_coprime, mod_inv, mod_power};
-    use super::core::modules::{cmm_const, me_const, swap};
     let n = 15;
     for a in 2..n {
         if !is_coprime(a, n) {
@@ -350,8 +350,8 @@ fn test_me_const() {
 
 #[test]
 fn test_qft() {
+    use super::core::circuits::qft;
     use super::core::gates::{H, X};
-    use super::core::modules::qft;
     let u = qft(&vec![0, 1, 2, 3]);
     let mut q_in = Qubits::from_num(4, 0);
     let q_out = u.apply(q_in);
@@ -363,8 +363,8 @@ fn test_qft() {
 
 #[test]
 fn test_iqft() {
+    use super::core::circuits::{inv_qft, qft};
     use super::core::gates::H;
-    use super::core::modules::{inv_qft, qft};
 
     let u = qft(&vec![0, 1, 2, 3]);
     let u2 = inv_qft(&vec![0, 1, 2, 3]);
@@ -384,9 +384,9 @@ fn test_iqft() {
 
 #[test]
 fn test_phase_estimation() {
+    use super::core::circuits::{inv_qft, swap};
     use super::core::gates::H;
     use super::core::gates::{CU, R, U};
-    use super::core::modules::{inv_qft, swap};
 
     let x = vec![0, 1, 2, 3];
     fn tar_u() -> U {

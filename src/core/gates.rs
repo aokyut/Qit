@@ -20,14 +20,21 @@ pub trait Applicable {
     fn apply_iter(&self, qubits: Qubits, iter: &BitSlideIndex) -> Qubits;
 }
 
+/**
+Trait that implements applying gates in reverse order
+ */
 pub trait Reversible {
     fn reverse(&mut self) {}
 }
 
+/**
+A trait that combines the Applicable and Reversible traits.
+ */
 pub trait Operator: Applicable + Reversible {}
 
-// pub type OperatorBox = Vec<Box<dyn Operator>>;
-
+/**
+struct used internally when applying gates
+ */
 pub struct BitSlideIndex {
     idx: usize,
     pub mask: usize,
@@ -81,6 +88,9 @@ impl Iterator for BitSlideIndex {
     }
 }
 
+/**
+ * Hadamard Gate. 1√2(|0⟩⟨0| + |1⟩⟨0| + |0⟩⟨1| - |1⟩⟨1|)
+*/
 #[derive(Clone, Copy)]
 pub struct H {
     target_bit: usize,
@@ -117,11 +127,13 @@ impl Applicable for H {
 impl Reversible for H {}
 impl Operator for H {}
 
+/**
+Not Gate(pauli-X). (|1⟩⟨0| + |0⟩⟨1|)
+*/
 #[derive(Clone, Copy)]
 pub struct X {
     target_bit: usize,
 }
-
 impl X {
     pub fn new(target_bit: usize) -> Self {
         return X {
@@ -153,6 +165,9 @@ impl Applicable for X {
 impl Reversible for X {}
 impl Operator for X {}
 
+/**
+ pauli-Y Gate. i(|1⟩⟨0| - |0⟩⟨1|)
+*/
 #[derive(Clone, Copy)]
 pub struct Y {
     target_bit: usize,
@@ -189,6 +204,9 @@ impl Applicable for Y {
 impl Reversible for Y {}
 impl Operator for Y {}
 
+/**
+ pauli-Z Gate. (|0⟩⟨0| - |1⟩⟨1|)
+*/
 #[derive(Clone, Copy)]
 pub struct Z {
     target_bit: usize,
@@ -222,6 +240,13 @@ impl Applicable for Z {
 impl Reversible for Z {}
 impl Operator for Z {}
 
+/**
+Phase shift Gate. (|0⟩⟨0| + exp(ir)|1⟩⟨1|)
+
+(|0⟩ + |1⟩)  →R(π)→  (|0⟩ - |1⟩)
+
+(|0⟩ + |1⟩)  →R(π/2)→  (|0⟩ + i|1⟩)
+ */
 #[derive(Clone, Copy)]
 pub struct R {
     target_bit: usize,
@@ -259,6 +284,9 @@ impl Applicable for R {
 impl Reversible for R {}
 impl Operator for R {}
 
+/**
+Controlled-Not Gate.
+ */
 #[derive(Clone, Copy)]
 pub struct CX {
     controll_bit: usize,
@@ -296,6 +324,9 @@ impl Applicable for CX {
 impl Reversible for CX {}
 impl Operator for CX {}
 
+/**
+Controlled-Controlled-Not(CXX) Gate.
+ */
 #[derive(Clone, Copy)]
 pub struct CCX {
     controll_bit1: usize,
@@ -338,6 +369,9 @@ impl Applicable for CCX {
 impl Reversible for CCX {}
 impl Operator for CCX {}
 
+/**
+Controlled-Controlled-Controlled-...(N)-Not Gate
+*/
 #[derive(Clone)]
 pub struct CNX {
     controll_bits: Vec<usize>,
@@ -388,6 +422,10 @@ impl Applicable for CNX {
 impl Reversible for CNX {}
 impl Operator for CNX {}
 
+/**
+Controlled-Unitary Gate.
+Control a group of arbitrary gates using a specific qubit.
+ */
 pub struct CU {
     controll_bit: usize,
     gates: Vec<Box<dyn Operator>>,
@@ -442,6 +480,21 @@ impl Reversible for CU {
 
 impl Operator for CU {}
 
+/**
+Unitary struct. struct for applying a vector of arbitrary gates together to a qubit
+
+# Example usage
+```
+use Qit::{gates::*};
+// full adder
+let ccx1 = CCX::new(a_in, b_in, c_out);
+let cx1 = CX::new(a_in, b_in);
+let ccx2 = CCX::new(b_in, c_in, c_out);
+let cx2 = CX::new(c_in, b_in);
+let adder = U::new(vec![Box::new(ccx1), Box::new(cx1), Box::new(ccx2), Box::new(cx2)],
+        String::from("full_adder_bit"));
+```
+ */
 pub struct U {
     pub gates: Vec<Box<dyn Operator>>,
     label: String,

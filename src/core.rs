@@ -50,9 +50,9 @@ assert_eq!(mul_c1f1, Comp::new(4.0, 2.0));
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Comp(pub f64, pub f64);
 
+pub mod circuits;
 pub mod gates;
 pub mod mod_funcs;
-pub mod modules;
 
 impl Comp {
     pub fn new(re: f64, im: f64) -> Self {
@@ -124,6 +124,35 @@ impl ops::Mul<f64> for Comp {
     }
 }
 
+/**
+struct representing a collection of pseudo-qubits.
+
+# Example usage
+```
+use Qit::core::{pop_from_probs, Qubits};
+let qbit = Qubits::from_num(2, 1);
+qbit.print_probs();
+// |00⟩ :   0%
+// |01⟩ : 100%
+// |10⟩ :   0%
+// |11⟩ :   0%
+qbit.print_cmps();
+// |00⟩ : +0.000 +0.000i
+// |01⟩ : +1.000 +0.000i
+// |10⟩ : +0.000 +0.000i
+// |11⟩ : +0.000 +0.000i
+let probs = qbit._measure(&vec![0, 1]);
+println!("{probs:#?}");
+// [
+//     0.0,
+//     1.0,
+//     0.0,
+//     0.0,
+// ]
+println!("{}", pop_from_probs(&probs, 2));
+// 1
+```
+ */
 #[derive(Clone)]
 pub struct Qubits {
     pub size: usize,
@@ -131,6 +160,11 @@ pub struct Qubits {
 }
 
 impl Qubits {
+    /**
+    A function that creates a qubit that represents the input value
+
+    1.0 * |number⟩
+    */
     pub fn from_num(size: usize, number: usize) -> Self {
         assert!((1 << size) > number);
         let mut bits = vec![Comp::zero(); 1 << size];
@@ -160,6 +194,9 @@ impl Qubits {
         };
     }
 
+    /**
+     * Output |0...0⟩ Qubit of input size
+     */
     pub fn zeros(size: usize) -> Self {
         let mut bits = vec![Comp::zero(); 1 << size];
         bits[0] = Comp(1.0, 0.0);
@@ -169,6 +206,9 @@ impl Qubits {
         };
     }
 
+    /**
+     * Output the probability of outputting each bit string as a vector
+     */
     pub fn print_probs(&self) {
         for index in 0..(1 << self.size) {
             println!(
@@ -180,6 +220,9 @@ impl Qubits {
         }
     }
 
+    /**
+     * Output all bit strings and their corresponding complex numbers
+     */
     pub fn print_cmps(&self) {
         for index in 0..(1 << self.size) {
             println!(
@@ -199,6 +242,9 @@ impl Qubits {
         return prob;
     }
 
+    /**
+     * Function to obtain the most probable qubit string
+     */
     pub fn pop_most_plausible(&self) -> usize {
         let mut max_prob = 0.0;
         let mut max_idx = 0;
@@ -212,6 +258,9 @@ impl Qubits {
         return max_idx;
     }
 
+    /**
+    Function to obtain probability distribution of qubits
+     */
     pub fn _measure(&self, tar: &[usize]) -> Vec<f64> {
         let mut probs: Vec<f64> = Vec::new();
         for _ in 0..(1 << tar.len()) {
@@ -252,6 +301,9 @@ impl Qubits {
     }
 }
 
+/**
+Obtain the observed bit string from the probability distribution extracted from the measure function
+ */
 pub fn pop_from_probs(probs: &[f64], size: usize) -> usize {
     use rand::prelude::*;
 

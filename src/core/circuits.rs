@@ -1,7 +1,7 @@
 /*!
- Commonly used quantum circuits.  
+ Commonly used quantum circuits.
 
- You can easily use basic operations such as addition and subtraction and 
+ You can easily use basic operations such as addition and subtraction and
  major quantum circuits such as quantum Fourier transform.
 */
 use std::collections::HashSet;
@@ -10,7 +10,6 @@ use super::mod_funcs::{is_coprime, mod_inv, mod_power};
 use super::{gates::*, Qubits};
 
 use std::f64::consts::PI;
-
 
 pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U {
     let cx_a = CX::new(a_in, s_out);
@@ -23,7 +22,7 @@ pub fn half_adder_bit(a_in: usize, b_in: usize, s_out: usize, c_out: usize) -> U
 }
 
 pub fn full_adder_bit(a_in: usize, b_in: usize, c_in: usize, c_out: usize) -> U {
-    //! |a⟩|b⟩|C⟩|0⟩ -> |a⟩|a+b+c⟩|C⟩|C_out⟩
+    //! |a⟩|b⟩|C⟩|0⟩ → |a⟩|a+b+c⟩|C⟩|C_out⟩
     let ccx1 = CCX::new(a_in, b_in, c_out);
     let cx1 = CX::new(a_in, b_in);
     let ccx2 = CCX::new(b_in, c_in, c_out);
@@ -35,7 +34,7 @@ pub fn full_adder_bit(a_in: usize, b_in: usize, c_in: usize, c_out: usize) -> U 
 }
 
 pub fn full_adder_nbits(a_in: &[usize], b_in: &[usize], c_inout: &[usize]) -> U {
-    //! |a⟩|b⟩|0⟩ -> |a⟩|a+b⟩|0⟩
+    //! |a⟩|b⟩|0⟩ → |a⟩|a+b⟩|0⟩
     assert_eq!(a_in.len(), b_in.len());
     assert!(a_in.len() > 0);
     check_unique(vec![&a_in, &b_in, &c_inout]);
@@ -93,7 +92,7 @@ pub fn substract_nbits(a_in: &[usize], b_in: &[usize], c_inout: &[usize]) -> U {
 }
 
 pub fn add_const_2_power(b: &[usize], m: usize) -> U {
-    //! |0⟩|b⟩ -> |overflow⟩|b + 2^m⟩
+    //! |0⟩|b⟩ → |overflow⟩|b + 2^m⟩
     assert!(b.len() > 0);
     assert!(b.len() - 1 > m);
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
@@ -113,7 +112,7 @@ pub fn add_const_2_power(b: &[usize], m: usize) -> U {
 }
 
 pub fn add_const(b: &[usize], a_const: usize) -> U {
-    //! |0⟩|b⟩ -> |overflow⟩|b + a⟩
+    //! |0⟩|b⟩ → |overflow⟩|b + a⟩
     assert!(b.len() > 1);
     assert!((a_const >> (b.len() - 1)) == 0);
     check_unique(vec![b]);
@@ -133,7 +132,7 @@ pub fn add_const(b: &[usize], a_const: usize) -> U {
 }
 
 pub fn sub_const(b: &[usize], a_const: usize) -> U {
-    //! |0⟩|b⟩|0⟩ -> |sign⟩|b + a⟩|0⟩
+    //! |0⟩|b⟩|0⟩ → |sign⟩|b + a⟩|0⟩
     let mut sub = add_const(b, a_const);
     sub.reverse();
     return U::new(sub.gates, String::from("sub_const"));
@@ -164,7 +163,7 @@ pub fn mod_add(
     t: usize,
     num: usize,
 ) -> U {
-    //! |a⟩|b⟩|N⟩|0⟩ -> |a⟩|a+b mod N⟩|N⟩|0⟩
+    //! |a⟩|b⟩|N⟩|0⟩ → |a⟩|a+b mod N⟩|N⟩|0⟩
     assert_eq!(a.len(), b.len());
     assert_eq!(n_in.len(), b.len());
     assert_eq!(zero.len(), b.len());
@@ -215,14 +214,14 @@ pub fn mod_add(
 
 pub fn mod_add_const(b: &[usize], t: usize, a_const: usize, n_const: usize) -> U {
     /*!
-     get assembled circuit |b⟩|c⟩|t⟩ → |a+b mod N⟩|c⟩|t⟩
+    get assembled circuit |b⟩|c⟩|t⟩ → |a+b mod N⟩|c⟩|t⟩
 
-     c, t = |0⟩.  
-     a, N: const.   
-     N < 2^(n+1).    
-     a, b < N.  
-     b.len() == n + 1.  
-     */
+    c, t = |0⟩.
+    a, N: const.
+    N < 2^(n+1).
+    a, b < N.
+    b.len() == n + 1.
+    */
     assert!(b.len() > 1);
     check_unique(vec![&b, &vec![t]]);
 
@@ -269,7 +268,7 @@ pub fn cmm_const(
 ) -> U {
     //! controll_mod_mul_const
     //!
-    //! |x⟩|0⟩|c⟩|t⟩ -> |x⟩|ax mod N, or x⟩|c⟩|t⟩  
+    //! |x⟩|0⟩|c⟩|t⟩ → |x⟩|ax mod N, or x⟩|c⟩|t⟩  
     //! c, t = |0⟩  
     //! a, N: const. N < 2^(n+1). a, x < N  
     //! tar_reg.len() == n + 1  
@@ -315,7 +314,7 @@ pub fn me_const(
 ) -> U {
     //! mod_exponential_const
     //!
-    //! |x⟩|1⟩|0⟩ -> |x⟩|a^x mod N⟩|0⟩  
+    //! |x⟩|1⟩|0⟩ → |x⟩|a^x mod N⟩|0⟩  
     //! a_x: n-bit, zero: n-bit, x: m-bit  
     assert!(zero.len() == a_x.len());
     assert!(a_x.len() >= 1);
@@ -345,8 +344,8 @@ pub fn me_const(
 
 pub fn qft(x: &[usize]) -> U {
     //! quantum_furier_transform
-    //! 
-    //! |j⟩ -> exp(i2πkj / 2^n)|k⟩
+    //!
+    //! |j⟩ → exp(i2πkj / 2^n)|k⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
 
@@ -378,7 +377,7 @@ pub fn qft(x: &[usize]) -> U {
 pub fn inv_qft(x: &[usize]) -> U {
     //! inverse_quantum_furier_transform
     //!
-    //! Σexp(i2πkj / 2^n)|k⟩ -> |j⟩
+    //! Σexp(i2πkj / 2^n)|k⟩ → |j⟩
     let n = x.len();
     let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
     let (a, b): (Vec<usize>, Vec<usize>) = (
@@ -402,7 +401,6 @@ pub fn inv_qft(x: &[usize]) -> U {
             )));
         }
     }
-
 
     let mut u = U::new(u_gates, String::from("iqft"));
     u.reverse();
