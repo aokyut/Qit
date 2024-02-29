@@ -387,14 +387,14 @@ impl Iterator for BitSlideIndex {
 }
 
 /**
-Trait that implements applying gates in reverse order
+Trait that implements make gates inversed
  */
 pub trait Inversible {
     fn inverse(&mut self) {}
 }
 
 /**
-A trait that combines the Applicable and Reversible traits.
+A trait that combines the Applicable and Inversible traits.
  */
 pub trait Operator: Applicable + Inversible {}
 
