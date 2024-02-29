@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use super::{
     core::{
         mod_funcs::{is_coprime, mod_inv, mod_power},
-        Operator, Reversible,
+        Inversible, Operator,
     },
     gates::*,
 };
@@ -97,7 +97,7 @@ pub fn full_adder_nbits(a_in: &[usize], b_in: &[usize], c_inout: &[usize]) -> U 
 
 pub fn substract_nbits(a_in: &[usize], b_in: &[usize], c_inout: &[usize]) -> U {
     let mut sub = full_adder_nbits(a_in, b_in, c_inout);
-    sub.reverse();
+    sub.inverse();
     return sub;
 }
 
@@ -266,7 +266,7 @@ pub fn wrapping_qadd_const(b: &[usize], a_const: usize) -> U {
 pub fn sub_const(b: &[usize], a_const: usize) -> U {
     //! |0⟩|b⟩|0⟩ → |sign⟩|b + a⟩|0⟩
     let mut sub = add_const(b, a_const);
-    sub.reverse();
+    sub.inverse();
     return U::new(sub.gates, String::from("sub_const"));
 }
 
@@ -283,7 +283,7 @@ Required number of qubits: n(b) + 1(overflow) = **n + 1**
  */
 pub fn overflow_qsub_const(b: &[usize], overflow: usize, a_const: usize) -> U {
     let mut sub = overflow_qadd_const(b, overflow, a_const);
-    sub.reverse();
+    sub.inverse();
     sub.rename(String::from("o_qsub_const"));
     return sub;
 }
@@ -301,7 +301,7 @@ Required number of qubits: n(b) = **n**
  */
 pub fn wrapping_qsub_const(b: &[usize], a_const: usize) -> U {
     let mut sub = wrapping_qadd_const(b, a_const);
-    sub.reverse();
+    sub.inverse();
     sub.rename(String::from("w_qsub_const"));
     return sub;
 }
@@ -517,7 +517,7 @@ pub fn me_const(
         //[icmm] |x⟩|x * a^2^x_n mod N⟩ -> |x - x * a^2^x_n * a^(-2^x_n)⟩|x * a^2^x_n mod N⟩
         //                              -> |0⟩|x * a^2^x_n mod N⟩
         let mut icmm = cmm_const(a_x, zero, overflow, x_i, _const_a_xi, n_const);
-        icmm.reverse();
+        icmm.inverse();
         u_gates.extend(icmm.gates);
     }
 
@@ -564,32 +564,8 @@ Circuit that performs inverse quantum Fourier transform
 Σexp(i2πkj / 2^n)|k⟩ → |j⟩
 */
 pub fn inv_qft(x: &[usize]) -> U {
-    let n = x.len();
-    let mut u_gates: Vec<Box<dyn Operator>> = Vec::new();
-    let (a, b): (Vec<usize>, Vec<usize>) = (
-        (0..(n / 2)).map(|i| x[i]).collect::<Vec<usize>>(),
-        (0..(n / 2)).map(|i| x[n - i - 1]).collect::<Vec<usize>>(),
-    );
-
-    let sw = swap(&a, &b);
-    u_gates.extend(sw.gates);
-
-    for i in 0..n {
-        // hadamard
-        u_gates.push(Box::new(H::new(x[i])));
-        for j in (i + 1)..n {
-            let angle = 1.0 - (-((j + 1 - i) as f64)).exp2();
-            let r = R::new(x[i], 2.0 * PI * angle);
-            u_gates.push(Box::new(CU::new(
-                x[j],
-                vec![Box::new(r)],
-                format!("r_-2^-{}", j + 1 - i),
-            )));
-        }
-    }
-
-    let mut u = U::new(u_gates, String::from("iqft"));
-    u.reverse();
+    let mut u = qft(x);
+    u.inverse();
 
     return u;
 }

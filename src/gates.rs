@@ -143,9 +143,9 @@ assert_eq!(q_out.bits[0b1111], Comp::new(1.0, 0.0));
 ```
 */
 
-use std::f64::consts::SQRT_2;
+use std::f64::consts::{PI, SQRT_2};
 
-use super::core::{Applicable, BitSlideIndex, Comp, Operator, Qubits, Reversible};
+use super::core::{Applicable, BitSlideIndex, Comp, Inversible, Operator, Qubits};
 
 const SQRT2_INV: f64 = 1.0 / SQRT_2;
 
@@ -201,7 +201,7 @@ impl Applicable for H {
     }
 }
 
-impl Reversible for H {}
+impl Inversible for H {}
 impl Operator for H {}
 
 /**
@@ -254,7 +254,7 @@ impl Applicable for X {
     }
 }
 
-impl Reversible for X {}
+impl Inversible for X {}
 impl Operator for X {}
 
 /**
@@ -308,7 +308,7 @@ impl Applicable for Y {
     }
 }
 
-impl Reversible for Y {}
+impl Inversible for Y {}
 impl Operator for Y {}
 
 /**
@@ -360,7 +360,7 @@ impl Applicable for Z {
     }
 }
 
-impl Reversible for Z {}
+impl Inversible for Z {}
 impl Operator for Z {}
 
 /**
@@ -421,7 +421,12 @@ impl Applicable for R {
     }
 }
 
-impl Reversible for R {}
+impl Inversible for R {
+    fn inverse(&mut self) {
+        self.angle = 2.0 * PI - self.angle;
+        self.phase = Comp(self.angle.cos(), self.angle.sin());
+    }
+}
 impl Operator for R {}
 
 /**
@@ -479,7 +484,7 @@ impl Applicable for CX {
     }
 }
 
-impl Reversible for CX {}
+impl Inversible for CX {}
 impl Operator for CX {}
 
 /**
@@ -546,7 +551,7 @@ impl Applicable for CCX {
     }
 }
 
-impl Reversible for CCX {}
+impl Inversible for CCX {}
 impl Operator for CCX {}
 
 /**
@@ -619,7 +624,7 @@ impl Applicable for CNX {
     }
 }
 
-impl Reversible for CNX {}
+impl Inversible for CNX {}
 impl Operator for CNX {}
 
 /**
@@ -744,10 +749,10 @@ impl Applicable for CU {
     }
 }
 
-impl Reversible for CU {
-    fn reverse(&mut self) {
+impl Inversible for CU {
+    fn inverse(&mut self) {
         for g in self.gates.iter_mut() {
-            g.reverse();
+            g.inverse();
         }
         self.gates.reverse();
     }
@@ -810,10 +815,10 @@ impl Applicable for U {
     }
 }
 
-impl Reversible for U {
-    fn reverse(&mut self) {
+impl Inversible for U {
+    fn inverse(&mut self) {
         for g in self.gates.iter_mut() {
-            g.reverse();
+            g.inverse();
         }
         self.gates.reverse();
     }

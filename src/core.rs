@@ -389,14 +389,14 @@ impl Iterator for BitSlideIndex {
 /**
 Trait that implements applying gates in reverse order
  */
-pub trait Reversible {
-    fn reverse(&mut self) {}
+pub trait Inversible {
+    fn inverse(&mut self) {}
 }
 
 /**
 A trait that combines the Applicable and Reversible traits.
  */
-pub trait Operator: Applicable + Reversible {}
+pub trait Operator: Applicable + Inversible {}
 
 /**
 Obtain the observed bit string from the probability distribution extracted from the measure function
