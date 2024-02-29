@@ -623,13 +623,52 @@ impl Reversible for CNX {}
 impl Operator for CNX {}
 
 /**
+An alias for handling quantum gates together.
+
+# Example
+
+```
+use Qit::core::{Applicable, Qubits};
+use Qit::gates::{OperatorVec, PushOps, H, U};
+
+let mut v = OperatorVec::new();
+v.push_ops(H::new(0));
+v.push_ops(H::new(1));
+let u = U::new(v, String::from("hadamards"));
+let q_in = Qubits::from_num(2, 0);
+let q_out = u.apply(q_in);
+
+q_out.print_cmps();
+// |00⟩ : +0.500 +0.000i
+// |01⟩ : +0.500 +0.000i
+// |10⟩ : +0.500 +0.000i
+// |11⟩ : +0.500 +0.000i
+```
+*/
+pub type OperatorVec = Vec<Box<dyn Operator>>;
+
+/**
+A trait to make adding gates as easy as possible.
+ */
+pub trait PushOps {
+    fn push_ops(&mut self, op: impl Operator + 'static);
+}
+
+impl PushOps for OperatorVec {
+    fn push_ops(&mut self, op: impl Operator + 'static) {
+        self.push(Box::new(op));
+    }
+}
+
+// CU
+/**
 Controlled-Unitary Gate.
 Control a group of arbitrary gates using a specific qubit.
 
 ```
 use Qit::circuits::wrapping_qadd_const;
 use Qit::core::{Applicable, Comp, Operator, Qubits};
-use Qit::gates::CU;
+use Qit::gates::{CU, OperatorVec, PushOps};
 
 // make controlled-add_3
 let b_in = vec![0, 1, 2];
@@ -640,7 +679,7 @@ let controlled_add_3 = CU::from_u(controll_bit, add_3);
 
 // or
 let add_3 = wrapping_qadd_const(&b_in, 3);
-let add_3_gates: Vec<Box<dyn Operator>> = add_3.gates;
+let add_3_gates: OperatorVec = add_3.gates;
 let controlled_add_3 = CU::new(
     controll_bit,
     add_3_gates,
@@ -664,12 +703,12 @@ q_out.print_cmps();
 */
 pub struct CU {
     controll_bit: usize,
-    gates: Vec<Box<dyn Operator>>,
+    gates: OperatorVec,
     label: String,
 }
 
 impl CU {
-    pub fn new(controll_bit: usize, gates: Vec<Box<dyn Operator>>, label: String) -> Self {
+    pub fn new(controll_bit: usize, gates: OperatorVec, label: String) -> Self {
         return CU {
             controll_bit: controll_bit,
             gates: gates,
@@ -736,12 +775,12 @@ let adder = U::new(vec![Box::new(ccx1), Box::new(cx1), Box::new(ccx2), Box::new(
 ```
  */
 pub struct U {
-    pub gates: Vec<Box<dyn Operator>>,
+    pub gates: OperatorVec,
     label: String,
 }
 
 impl U {
-    pub fn new(gates: Vec<Box<dyn Operator>>, name: String) -> Self {
+    pub fn new(gates: OperatorVec, name: String) -> Self {
         return U {
             gates: gates,
             label: name,
