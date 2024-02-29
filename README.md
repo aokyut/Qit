@@ -10,7 +10,7 @@ All gates can make changes to the qubit using the apply method.
 ### Usage basic gates
 ```rust
 use Qit::core::{Applicable, Operator, Qubits};
-use Qit::gates::{CX, H, U, X, Z};
+use Qit::gates::{CX, H, U, X, Z, OperatorVec, PushOps};
 
 // 1-Bit Gate
 let h_0 = H::new(0);
@@ -36,7 +36,10 @@ q_out.print_cmps();
 let x = X::new(0);
 let cx01 = CX::new(0, 1);
 let z = Z::new(1);
-let circ: Vec<Box<dyn Operator>> = vec![Box::new(x), Box::new(cx01), Box::new(z)];
+let mut circ = OperatorVec::new();
+circ.push_ops(x);
+circ.push_ops(cx01);
+circ.push_ops(z);
 let u = U::new(circ, String::from("example_circ"));
 
 let q_in = Qubits::from_num(2, 0);
